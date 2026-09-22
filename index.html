@@ -114,6 +114,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-conten
 .tableWrap{overflow-x:auto;margin:8px 0}.deepTable{border-collapse:collapse;width:100%;font-size:13px;line-height:1.5;background:#fff;border-radius:12px;overflow:hidden}
 .deepTable th,.deepTable td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}.deepTable th{background:#f4f0fb;font-weight:850;white-space:nowrap}
 .lessonBlock.deep p{margin:8px 0}
+.clipRow{display:flex;flex-wrap:wrap;gap:8px}.clipBtn{border:1px solid #c5b7ef;background:#fff;color:var(--accent2);border-radius:12px;padding:9px 12px;font-weight:850;font-size:13px;text-align:left}.clipBtn:hover{background:#f8f4ff}.clipBtn.playing{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 </style>
 </head>
@@ -645,6 +646,7 @@ document.querySelectorAll('[data-daily]').forEach(b=>b.onclick=()=>startDailySte
 
 function showView(name){
   if(PLAY.active)playStop();
+  stopClip();
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));
   document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
   if(name==='learning')renderLearning();
@@ -857,6 +859,7 @@ function renderLearning(){
 }
 function selectLevel(id){selectedLevel=id;document.getElementById('lessonSearch').value='';const first=LESSONS.find(l=>l.level===id);if(first)selectedLessonId=first.id;renderLearning()}
 function selectLesson(id){
+  stopClip();
   selectedLessonId=id;STATE.lastLesson=id;saveState();inlineAnswered=false;renderLearning();
   if(window.innerWidth<=900)document.getElementById('lessonPane')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -871,6 +874,7 @@ function renderLessonPane(){
     <div class="lessonBlock"><h4>개념 해설</h4>${l.body}</div>
     <div class="lessonBlock sky"><h4>구조 / 공식</h4><div class="formula">${l.formula}</div></div>
     <div class="lessonBlock"><h4>예시</h4>${l.example}</div>
+    ${renderClips(l)}
     ${l.deep?`<div class="lessonBlock deep"><h4>더 알아보기</h4>${l.deep}</div>`:''}
     <div class="lessonBlock mint"><h4>베이스에서 어떻게 쓰나</h4>${l.bass}</div>
     <div class="lessonBlock peach"><h4>귀로 무엇을 들어야 하나</h4>${l.ear}</div>
@@ -890,6 +894,7 @@ function renderLessonPane(){
   renderLessonDrill(l.id);
 }
 function nextLesson(dir){
+  stopClip();
   const i=LESSONS.findIndex(x=>x.id===selectedLessonId),n=Math.max(0,Math.min(LESSONS.length-1,i+dir));
   selectedLessonId=LESSONS[n].id;selectedLevel=LESSONS[n].level;STATE.lastLesson=selectedLessonId;saveState();renderLearning();
   if(window.innerWidth<=900)document.getElementById('lessonPane')?.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1792,6 +1797,50 @@ function renderDrillTypeBar(){
   bar.innerHTML=`<button class="${drillType==='all'?'active':''}" onclick="setDrillType('all')">전체</button>`+Object.entries(DRILL_TYPES).map(([k,v])=>`<button class="${drillType===k?'active':''}" onclick="setDrillType('${k}')">${v.label}</button>`).join('');
 }
 function setDrillType(t){drillType=t;renderDrillTypeBar();newQuiz()}
+const LESSON_CLIPS={"note_names": [["반음 E→F", "E4 F4:2"], ["온음 C→D", "C4 D4:2"], ["C#과 Db는 같은 소리", "C#4:2 Db4:2"]], "intervals": [["장3도 C→E", "C4 E4 C4+E4:2"], ["단3도 C→Eb", "C4 Eb4 C4+Eb4:2"], ["완전5도 C→G", "C4 G4 C4+G4:2"], ["트라이톤 C→F#", "C4 F#4 C4+F#4:2"]], "scale_degree": [["7→1 (B→C)", "@C @F @G7 @C B4 C5:2"], ["4→3 (F→E)", "@C @F @G7 @C F4 E4:2"]], "major_scale": [["C major", "C4:0.5 D4:0.5 E4:0.5 F4:0.5 G4:0.5 A4:0.5 B4:0.5 C5:2"], ["G major", "G3:0.5 A3:0.5 B3:0.5 C4:0.5 D4:0.5 E4:0.5 F#4:0.5 G4:2"]], "circle_fifths": [["5도 하행 해결 G7→C", "@G7:2 @C:3"], ["5도권 반시계 C→F→Bb→Eb", "@C:2 @F:2 @Bb:2 @Eb:3"]], "subdivision": [["4분음표", "b:C2 b:C2 b:C2 b:C2"], ["8분음표", "b:C2:0.5/0.3 b:C2:0.5/0.3 b:C2:0.5/0.3 b:C2:0.5/0.3 b:C2:0.5/0.3 b:C2:0.5/0.3 b:C2:0.5/0.3 b:C2:0.5/0.3"], ["16분음표", "b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15 b:C2:0.25/0.15"]], "swing_triplet": [["Straight 8th", "C4:0.5/0.35 C4:0.5/0.35 C4:0.5/0.35 C4:0.5/0.35 C4:0.5/0.35 C4:0.5/0.35 C4:0.5/0.35 C4:0.5/0.35"], ["Swing 8th", "C4:0.667/0.5 C4:0.333/0.25 C4:0.667/0.5 C4:0.333/0.25 C4:0.667/0.5 C4:0.333/0.25 C4:0.667/0.5 C4:0.333/0.25"]], "syncopation": [["정박 4분음표", "b:C2:1/0.5 b:C2:1/0.5 b:C2:1/0.5 b:C2:1/0.5"], ["싱코페이션 1 · 1& · 2& · 3 · 3a · 4&", "b:C2:0.5/0.3 b:C2:1/0.3 b:C2:0.5/0.3 b:C2:0.75/0.3 b:C2:0.75/0.3 b:C2:0.5/0.3"]], "harmonic_rhythm": [["1마디에 1코드", "@C:4 @Am:4 @F:4 @G:4"], ["2박에 1코드", "@C:2 @Am:2 @F:2 @G:2"]], "pentatonic": [["C major pentatonic", "C4:0.5 D4:0.5 E4:0.5 G4:0.5 A4:0.5 C5:2"], ["A minor pentatonic", "A3:0.5 C4:0.5 D4:0.5 E4:0.5 G4:0.5 A4:2"]], "blues_scale": [["C blues scale", "C4:0.5 Eb4:0.5 F4:0.5 Gb4:0.5 G4:0.5 Bb4:0.5 C5:2"], ["C7 위 4→b5→5", "@C7:0/3 F4:0.5 Gb4:0.5 G4:2"]], "triads": [["Major C E G", "C4 E4 G4 C4+E4+G4:2"], ["Minor C Eb G", "C4 Eb4 G4 C4+Eb4+G4:2"], ["Diminished C Eb Gb", "C4 Eb4 Gb4 C4+Eb4+Gb4:2"], ["Augmented C E G#", "C4 E4 G#4 C4+E4+G#4:2"]], "inversions": [["C → C/E → F (베이스 상승)", "@C:2 @C/E:2 @F:3"]], "chord_variants": [["Csus4 → C (4→3)", "@Csus4:2 @C:3"], ["Cadd9 vs C9", "@Cadd9:3 @C9:3"]], "seventh_chords": [["maj7 · 7 · m7 · m7b5 · dim7 (C)", "@Cmaj7:2 @C7:2 @Cm7:2 @Cm7b5:2 @Cdim7:2"], ["G7 → C (B→C, F→E)", "@G7:2 @C:3"]], "chord_symbols": [["G7 → G13", "@G7:2 @G13:3"], ["A7sus4 → A7", "@A7sus4:2 @A7:3"]], "major_diatonic": [["C major 7th chord 일곱 개", "@Cmaj7 @Dm7 @Em7 @Fmaj7 @G7 @Am7 @Bm7b5 @Cmaj7:2"]], "minor_scales": [["A natural minor", "A3:0.5 B3:0.5 C4:0.5 D4:0.5 E4:0.5 F4:0.5 G4:0.5 A4:2"], ["A harmonic minor", "A3:0.5 B3:0.5 C4:0.5 D4:0.5 E4:0.5 F4:0.5 G#4:0.5 A4:2"], ["A melodic minor (jazz)", "A3:0.5 B3:0.5 C4:0.5 D4:0.5 E4:0.5 F#4:0.5 G#4:0.5 A4:2"]], "minor_diatonic": [["Am–Dm–Em–Am (v minor)", "@Am7:2 @Dm7:2 @Em7:2 @Am7:3"], ["Am–Dm–E7–Am (V7)", "@Am7:2 @Dm7:2 @E7:2 @Am7:3"]], "roman_numeral": [["ii–V–I in C", "@Dm7:2 @G7:2 @Cmaj7:3"], ["ii–V–I in Bb", "@Cm7:2 @F7:2 @Bbmaj7:3"]], "harmonic_function": [["T → PD → D → T", "@Cmaj7:2 @Fmaj7:2 @G7:2 @Cmaj7:3"], ["거짓 종지 G7 → Am7", "@Dm7:2 @G7:2 @Am7:3"]], "modes": [["D Dorian (D 드론 위)", "b:D2:0/5 D4:0.5 E4:0.5 F4:0.5 G4:0.5 A4:0.5 B4:0.5 C5:0.5 D5:1.5"], ["D Aeolian (B → Bb)", "b:D2:0/5 D4:0.5 E4:0.5 F4:0.5 G4:0.5 A4:0.5 Bb4:0.5 C5:0.5 D5:1.5"], ["G Mixolydian", "b:G2:0/5 G3:0.5 A3:0.5 B3:0.5 C4:0.5 D4:0.5 E4:0.5 F4:0.5 G4:1.5"], ["F Lydian", "b:F2:0/5 F3:0.5 G3:0.5 A3:0.5 B3:0.5 C4:0.5 D4:0.5 E4:0.5 F4:1.5"]], "ii_v_i": [["ii–V–I", "@Dm7:2 @G7:2 @Cmaj7:4"], ["guide tone만 (C→B→B, F→F→E)", "F4+C5:2 F4+B4:2 E4+B4:4"]], "minor_ii_v_i": [["Bm7b5–E7–Am", "@Bm7b5:2 @E7b9:2 @Am6:4"], ["G# → A 해결", "@E7:0/2 G#4:2 @Am:0/3 A4:3"]], "cadences": [["Authentic G7→C", "@G7:2 @C:3"], ["Plagal F→C", "@F:2 @C:3"], ["Half C→G", "@C:2 @G:3"], ["Deceptive G7→Am", "@G7:2 @Am:3"], ["Minor plagal Fm→C", "@Fm:2 @C:3"]], "secondary_dominant": [["D7 → G7 → C (V/V)", "@C:2 @D7:2 @G7:2 @C:3"], ["비교: Dm7 → G7 → C", "@C:2 @Dm7:2 @G7:2 @C:3"]], "tonicization_modulation": [["A7→Dm 잠깐 강조 후 C로", "@C:2 @A7:2 @Dm7:2 @G7:2 @C:3"]], "jazz_blues": [["F jazz blues 12마디", "@F7:4 @Bb7:4 @F7:4 @Cm7:2 @F7:2 @Bb7:4 @Bdim7:4 @F7:4 @Am7:2 @D7:2 @Gm7:4 @C7:4 @F7:2 @D7:2 @Gm7:2 @C7:2 @F7:4"]], "dim_passing": [["C – C#dim7 – Dm7 – G7 – C", "@C:2 @C#dim7:2 @Dm7:2 @G7:2 @C:3"], ["Bb7 – Bdim7 – F7/C", "@Bb7:2 @Bdim7:2 @F7/C:3"]], "nonchord_tones": [["Passing E–F–G", "@C:0/3 E4 F4 G4"], ["Neighbor E–F–E", "@C:0/3 E4 F4 E4"], ["Suspension 4–3 (F→E)", "@G7:0/2 F4:2 @C:0/4 F4:2 E4:2"], ["Anticipation", "@G7:0/2 B4:1.5 C5:0.5 @C:0/3 C5:3"]], "guide_tones": [["G7의 B·F → C의 C·E", "B3+F4:2 C4+E4:3"]], "melody_harmony": [["같은 G, 다른 코드 (5th · b3 · 9th)", "@C:0/2 G4:2 @Em:0/2 G4:2 @Fmaj7:0/2 G4:2"]], "chromatic_approach": [["F → F# → G", "@Dm7:0/2 F4 F#4 @G7:0/2 G4:2"], ["Enclosure F–D#–E", "@G7:0/1 F4:0.5 D#4:0.5 @Cmaj7:0/2 E4:2"]], "extensions": [["G7 → G9 → G13", "@G7:2 @G9:2 @G13:3"]], "tensions": [["Cmaj7 위 D (9)", "@Cmaj7:0/3 D5:3"], ["Cmaj7 위 F (11, 마찰)", "@Cmaj7:0/3 F5:3"]], "altered_dominant": [["G7 → C", "@G7:2 @C:3"], ["G7(b9) → C (Ab→G)", "@G7b9:2 @C:3"], ["G7alt → Cm", "@G7alt:2 @Cm:3"]], "tritone_sub": [["Dm7 – G7 – Cmaj7", "@Dm7:2 @G7:2 @Cmaj7:3"], ["Dm7 – Db7 – Cmaj7", "@Dm7:2 @Db7:2 @Cmaj7:3"]], "modal_interchange": [["F → Fm → C (A→Ab→G)", "@C:2 @F:2 @Fm:2 @C:3"], ["C – Bb – F – C", "@C:2 @Bb:2 @F:2 @C:3"]], "symmetric_scales": [["G7(b9) + H-W diminished", "@G7b9:0/4.5 G4:0.5 Ab4:0.5 Bb4:0.5 B4:0.5 C#5:0.5 D5:0.5 E5:0.5 F5:0.5 G5:0.5"], ["G7(#5) + whole tone", "@G7#5:0/4 G4:0.5 A4:0.5 B4:0.5 C#5:0.5 D#5:0.5 F5:0.5 G5:1"]], "modal_vs_functional": [["Dm7–G7 vamp (중심 D)", "@Dm7:2 @G7:2 @Dm7:2 @G7:2 @Dm7:3"], ["Dm7–G7–Cmaj7 (중심 C)", "@Dm7:2 @G7:2 @Cmaj7:4"]], "backdoor": [["G7 → Cmaj7", "@Dm7:2 @G7:2 @Cmaj7:3"], ["Fm7 – Bb7 – Cmaj7", "@Fm7:2 @Bb7:2 @Cmaj7:3"]], "bass_voice_leading": [["Dm7→G7: D–F–F#–G", "@Dm7:0/3 b:D2 b:F2 b:F#2 @G7:0/2 b:G2:2"]], "walking_bass": [["ii–V–I walking (표의 예시)", "@Dm7:0/4 b:D2 b:E2 b:F2 b:F#2 @G7:0/4 b:G2 b:B2 b:D3 b:Db3 @Cmaj7:0/4 b:C3 b:E3 b:G3 b:E3"]], "pocket": [["Legato", "b:C2:1/0.95 b:C2:1/0.95 b:C2:1/0.95 b:C2:1/0.95"], ["Staccato", "b:C2:1/0.3 b:C2:1/0.3 b:C2:1/0.3 b:C2:1/0.3"]], "solo_target_tones": [["1박 target F → B → E", "@Dm7:0/4 F4 A4 C5 A4 @G7:0/4 B4 A4 G4 F4 @Cmaj7:0/4 E4:4"]], "solo_chord_scale": [["G7 위 E(13) → C", "@G7:0/2 E5:2 @Cmaj7:0/3 E5:3"], ["G7 위 Eb(b13) → Cm", "@G7b9:0/2 Eb5:2 @Cm:0/3 Eb5:3"]], "solo_arpeggio_cells": [["F A C E → F D B G → E G B D", "@Dm7:0/2 F4:0.5 A4:0.5 C5:0.5 E5:0.5 @G7:0/2 F5:0.5 D5:0.5 B4:0.5 G4:0.5 @Cmaj7:0/3 E4:0.5 G4:0.5 B4:0.5 D5:1.5"]], "solo_guide_tone_line": [["Bb → A → A → G", "@Cm7:0/2 Bb4:2 @F7:0/2 A4:2 @Bbmaj7:0/2 A4:2 @Ebmaj7:0/2 G4:2"]], "solo_bebop_enclosure": [["G dominant bebop 하행", "@G7:0/4 G5:0.5 F#5:0.5 F5:0.5 E5:0.5 D5:0.5 C5:0.5 B4:0.5 A4:0.5 @Cmaj7:0/2 G4:2"], ["Enclosure F–D#–E", "@G7:0/1 F4:0.5 D#4:0.5 @Cmaj7:0/2 E4:2"]], "solo_motif": [["G–Bb–C → A–Bb–C", "@Cm7:0/4 G4:0.5 Bb4:0.5 C5:1 -:2 @F7:0/4 A4:0.5 Bb4:0.5 C5:1 -:2"]], "solo_rhythm_displacement": [["C–D–E 3음 그룹핑", "@C:0/4 C4:0.5 D4:0.5 E4:0.5 C4:0.5 D4:0.5 E4:0.5 C4:0.5 D4:0.5"]], "solo_pentatonic_superimposition": [["Dm7 위 D minor pent", "@Dm7:0/3 D4:0.5 F4:0.5 G4:0.5 A4:0.5 C5:0.5 D5:0.5"], ["Dm7 위 E minor pent (9·11·13)", "@Dm7:0/3 E4:0.5 G4:0.5 A4:0.5 B4:0.5 D5:0.5 E5:0.5"]], "solo_side_slipping": [["D minor pent → Eb minor pent → 복귀", "@Dm7:0/6 D4:0.5 F4:0.5 G4:0.5 A4:0.5 Eb4:0.5 Gb4:0.5 Ab4:0.5 Bb4:0.5 A4:2"]]};
+
+/* ================= lesson audio examples ================= */
+const NOTE_RE=/^([A-G])(#|b)?(-?\d)$/;
+function noteMidi(n){const m=NOTE_RE.exec(n);if(!m)return null;return 12*(Number(m[3])+1)+({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]])+(m[2]==='#'?1:m[2]==='b'?-1:0)}
+function parseClip(seq){
+  const ev=[];let t=0;
+  for(const tok of seq.trim().split(/\s+/)){
+    const m=/^(.*?)(?::([\d.]+)(?:\/([\d.]+))?)?$/.exec(tok);let body=m[1];
+    const step=m[2]!==undefined?Number(m[2]):1,sound=m[3]!==undefined?Number(m[3]):Math.max(.1,step*.92);
+    if(body==='-'){t+=step;continue}
+    if(body.startsWith('@')){const ch=parseChord(body.slice(1));if(!ch)throw new Error('chord '+body);ev.push({t,kind:'chord',ch,dur:sound})}
+    else{let inst='piano';if(body.startsWith('b:')){inst='bass';body=body.slice(2)}
+      const notes=body.split('+').map(noteMidi);if(notes.some(x=>x===null))throw new Error('note '+body);
+      ev.push({t,kind:'notes',inst,notes,dur:sound})}
+    t+=step;
+  }
+  return {ev,len:t};
+}
+const CLIP={gain:null,timer:null,btn:null};
+function stopClip(){
+  if(CLIP.gain){const g=CLIP.gain;try{g.gain.setTargetAtTime(0,tinyAudio().currentTime,.02)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},200);CLIP.gain=null}
+  clearTimeout(CLIP.timer);if(CLIP.btn){CLIP.btn.classList.remove('playing');CLIP.btn.textContent=CLIP.btn.dataset.label}CLIP.btn=null;
+}
+function playClip(id,i,btn){
+  const same=CLIP.btn===btn;stopClip();if(same)return;
+  const clip=(LESSON_CLIPS[id]||[])[i];if(!clip)return;
+  CLIP.btn=btn;btn.classList.add('playing');btn.textContent='■ 정지';
+  loadSamples().then(()=>{
+    if(CLIP.btn!==btn)return;
+    const c=tinyAudio(),g=c.createGain();g.gain.value=1;g.connect(earBus());CLIP.gain=g;
+    const bpm=clip[2]||90,beat=60/bpm,t0=c.currentTime+.08,{ev,len}=parseClip(clip[1]);let prev=null,end=0;
+    ev.forEach(e=>{
+      const t=t0+e.t*beat,d=e.dur*beat;end=Math.max(end,e.t+e.dur);
+      if(e.kind==='chord'){const v=placeVoicing(voicingPcs(e.ch),prev);prev=v;v.forEach(m=>sampleNote('piano',t,m,d,.2,g));const bp=e.ch.bass!==null?e.ch.bass:e.ch.root;sampleNote('piano',t,36+bp,d,.28,g)}
+      else e.notes.forEach(m=>sampleNote(e.inst,t,m,d,e.inst==='bass'?.62:(e.notes.length>1?.34:.5),g));
+    });
+    CLIP.timer=setTimeout(()=>{if(CLIP.btn===btn)stopClip()},(Math.max(end,len)*beat+.6)*1000);
+  });
+}
+function renderClips(l){
+  const cl=LESSON_CLIPS[l.id];if(!cl||!cl.length)return '';
+  return `<div class="lessonBlock clips"><h4>들어보기</h4><div class="clipRow">${cl.map((c,i)=>`<button class="clipBtn" data-label="▶ ${c[0]}" onclick="playClip('${l.id}',${i},this)">▶ ${c[0]}</button>`).join('')}</div></div>`;
+}
 
 STATE.practicedSongs=STATE.practicedSongs.filter(id=>SONGS.some(s=>s.id===id));
 storageSet(STORE_KEY,JSON.stringify(STATE));
@@ -1958,6 +2007,7 @@ document.getElementById('mainNav').addEventListener('scroll',updateNavFade,{pass
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&PLAY.active)playStop()});
 setupFretControls();updateSideProgress();updateHome();renderLearning();newQuiz();renderFretboard();generateEar();renderProgress();updateNavFade();
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})})}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopClip()});
 </script>
 </body>
 </html>
