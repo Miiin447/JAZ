@@ -1048,7 +1048,9 @@ function selectLesson(id){
   if(window.innerWidth<=900)document.getElementById('lessonPane')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+let lastPaneLesson=null;
 function renderLessonPane(){
+  if(lastPaneLesson!==selectedLessonId){lastPaneLesson=selectedLessonId;inlineAnswered=false}
   const l=LESSONS.find(x=>x.id===selectedLessonId);if(!l)return;
   const done=STATE.completed.includes(l.id),q=l.check;
   document.getElementById('lessonPane').innerHTML=`
@@ -1085,9 +1087,16 @@ function nextLesson(dir){
 }
 
 function answerInline(i){
-  const l=LESSONS.find(x=>x.id===selectedLessonId),q=l.check;
+  const l=LESSONS.find(x=>x.id===selectedLessonId),q=l.check,correct=i===q.ans;
   document.querySelectorAll('.inlineOpts button').forEach(b=>{const idx=Number(b.dataset.i);b.disabled=true;if(idx===q.ans)b.classList.add('correct');else if(idx===i)b.classList.add('wrong')});
-  document.getElementById('inlineFeedback').innerHTML=(i===q.ans?'<b>정답.</b> ':'<b>다시 확인.</b> ')+q.why;
+  let note='';
+  if(!inlineAnswered){
+    inlineAnswered=true;
+    STATE.quizTotal++;if(correct)STATE.quizCorrect++;
+    recordQuizResult({...q,lesson:l.title,concept:l.id},correct);logActivity();saveState();
+    note=correct?'':'<br><span class="tiny">오답 목록에 추가했어요. 복습 탭이나 퀴즈의 오답 복습에서 다시 풀 수 있어요.</span>';
+  }
+  document.getElementById('inlineFeedback').innerHTML=(correct?'<b>정답.</b> ':'<b>다시 확인.</b> ')+q.why+note;
 }
 function toggleLessonDone(id){
   const i=STATE.completed.indexOf(id);
