@@ -94,6 +94,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-conten
 @media(max-width:900px){#view-fretboard .fbControls{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.soloControls{grid-template-columns:1fr 1fr}.soloControls .wide{grid-column:1/-1}.soloBars{grid-template-columns:repeat(2,minmax(0,1fr))}.lineRow{grid-template-columns:repeat(8,minmax(0,1fr))}.lineRow .rowLabel{grid-column:1/-1}.lSlot{min-height:46px;font-size:12px}}
 
+@media(max-width:900px){.app{grid-template-rows:auto 1fr;align-content:start}}
+
 </style>
 </head>
 <body>
@@ -591,7 +593,7 @@ function renderDaily(){
   document.getElementById('homeHeroTitle').textContent='오늘의 개념 · '+l.title;
   document.getElementById('dailyConcept').textContent=l.summary;
   document.getElementById('dailyLearningText').textContent='「'+l.title+'」 강의와 바로 확인 문제';
-  document.getElementById('dailyFretText').textContent=`${ctx.root} · ${ctx.mission} 미션으로 지판 연결`;
+  document.getElementById('dailyFretText').textContent=`${ctx.root} · ${({note:'음 찾기',interval:'Interval',degree:'Scale Degree',chord:'Chord Tone',guide:'Guide Tone'})[ctx.mission]||ctx.mission} 미션으로 지판 연결`;
   document.getElementById('dailyEarText').textContent=(EAR_MODE_LABELS[ctx.ear]||'청음')+' 모드로 소리 연결';
   const song=SONGS.find(s=>s.id===ctx.song)||SONGS[0];
   document.getElementById('dailySongText').textContent=song.title+'에서 연습 포인트 확인';
@@ -967,7 +969,7 @@ function setupFretControls(){
   document.getElementById('fbRoot').innerHTML=noteOpts;
   document.getElementById('fbChordRoot').innerHTML=noteOpts;
   document.getElementById('fbScale').innerHTML=Object.keys(SCALE_LABELS).filter(k=>SCALE_MAP[k]).map(k=>`<option value="${k}">${SCALE_LABELS[k]}</option>`).join('');
-  document.getElementById('fbChord').innerHTML=Object.keys(CHORD_LABELS).map(k=>`<option value="${k}">${CHORD_LABELS[k]}</option>`).join('');
+  document.getElementById('fbChord').innerHTML=['major','minor','dim','aug','sus2','sus4','6','add9','maj7','7','m7','m7b5','dim7','m6','mmaj7','maj9','9','m9','13','7sus4','7b9','7#9','7b13','7#11','7alt'].map(k=>`<option value="${k}">${CHORD_LABELS[k]}</option>`).join('');
   document.getElementById('fbDisplay').innerHTML='<option value="all">Scale + Chord · 음이름</option><option value="degree">Scale + Chord · 코드 기준 도수</option><option value="chord">Chord tones only</option><option value="scale">Scale only</option><option value="notes">All note names</option>';
   let prevRoot=document.getElementById('fbRoot').value;
   document.getElementById('fbRoot').addEventListener('change',e=>{const cr=document.getElementById('fbChordRoot');if(cr.value===prevRoot)cr.value=e.target.value;prevRoot=e.target.value});
