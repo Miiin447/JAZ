@@ -3,6 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="화성학 강의 57개, 12 key 드릴, 음감 훈련, 베이스 지판을 한 곳에서 연습하는 화성학 학습 앱">
+<meta name="theme-color" content="#735fc7">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Chordinary · 화성학부터 솔로까지">
+<meta property="og:description" content="강의 57개 · 12 key 드릴 · 음감 훈련 · 베이스 지판">
+<meta property="og:url" content="https://miiin447.github.io/JAZ/">
+<meta property="og:image" content="https://miiin447.github.io/JAZ/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chordinary">
 <title>Chordinary v32 · Harmony Training Lab</title>
 <style>
 :root{--bg:#fbf8f4;--panel:#fffdfb;--ink:#2f2b35;--muted:#746f7d;--lav:#e8e1ff;--mint:#dff5ea;--peach:#ffe7d6;--sky:#dfeeff;--rose:#f8e0ea;--lemon:#fff4bf;--line:#ebe5ef;--accent:#735fc7;--accent2:#473a87;--ok:#3f8b68;--danger:#b45570;--shadow:0 12px 35px rgba(80,65,100,.10);--r:24px}
@@ -963,7 +978,7 @@ let fbMission=null,fbMissionType='note',fbGood=0,fbBad=0,fbFound=new Set(),audio
 const DEGREE_LABEL={0:'1',1:'b2',2:'2',3:'b3',4:'3',5:'4',6:'#4/b5',7:'5',8:'b6',9:'6',10:'b7',11:'7'};
 const INTERVAL_LABEL={1:'m2',2:'M2',3:'m3',4:'M3',5:'P4',6:'Tritone',7:'P5',8:'m6',9:'M6',10:'m7',11:'M7',12:'P8'};
 function tinyAudio(){if(!audioCtx2)audioCtx2=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx2.state==='suspended')audioCtx2.resume();return audioCtx2}
-function playMidi(m,d=.6){loadSamples().then(()=>{const c=tinyAudio();sampleNote('bass',c.currentTime+.01,m,d,.7,c.destination)})}
+function playMidi(m,d=.6){loadSamples().then(()=>{const c=tinyAudio();sampleNote('bass',c.currentTime+.01,m,d,.75,earBus())})}
 function setupFretControls(){
   const noteOpts=NOTE_NAMES.map(n=>`<option>${n}</option>`).join('');
   document.getElementById('fbRoot').innerHTML=noteOpts;
@@ -1227,7 +1242,7 @@ function renderEarFretboard(){
   document.getElementById('earFretboard').innerHTML=h;
 }
 function playSignal(midi,start,d=.38,type='sine',gain=.1){
-  const c=tinyAudio();sampleNote('piano',start,midi,d,Math.min(.7,gain*4.2),c.destination);
+  const c=tinyAudio();sampleNote('piano',start,midi,d,Math.min(.95,gain*6.5),earBus());
 }
 function recordEarResult(correct){
   const s=STATE.earStats[earMode]||{correct:0,total:0};s.total++;if(correct)s.correct++;STATE.earStats[earMode]=s;
@@ -1434,7 +1449,15 @@ function loadSamples(){
       jobs.push(new Promise(res=>{try{c.decodeAudioData(buf.buffer,ab=>{SAMPLER.buffers[k][m]=ab;res()},()=>res())}catch(e){res()}}));
     });
   });
-  SAMPLER.ready=Promise.all(jobs).then(()=>{SAMPLER.loaded=true});
+  SAMPLER.ready=Promise.all(jobs).then(()=>{
+    /* source samples are recorded very quietly (peak ~0.1): normalize each bank to a common level */
+    Object.values(SAMPLER.buffers).forEach(bank=>{
+      const bufs=Object.values(bank);let peak=0;
+      bufs.forEach(b=>{for(let ch=0;ch<b.numberOfChannels;ch++){const d=b.getChannelData(ch);for(let i=0;i<d.length;i++){const v=Math.abs(d[i]);if(v>peak)peak=v}}});
+      if(peak>0){const k=.9/peak;bufs.forEach(b=>{for(let ch=0;ch<b.numberOfChannels;ch++){const d=b.getChannelData(ch);for(let i=0;i<d.length;i++)d[i]*=k}})}
+    });
+    SAMPLER.loaded=true;
+  });
   return SAMPLER.ready;
 }
 function sampleNote(inst,t,midi,dur,gain=.5,dest){
@@ -1447,6 +1470,13 @@ function sampleNote(inst,t,midi,dur,gain=.5,dest){
   src.connect(g);g.connect(dest||audioOut());src.start(t);src.stop(t+dur+rel+.05);
 }
 
+/* ear-training / fretboard output: limiter so stacked chord notes never clip */
+let EAR_BUS=null;
+function earBus(){
+  const c=tinyAudio();
+  if(!EAR_BUS){const g=c.createGain();g.gain.value=1;const lim=c.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=2;lim.ratio.value=12;lim.attack.value=.002;lim.release.value=.15;g.connect(lim);lim.connect(c.destination);EAR_BUS=g}
+  return EAR_BUS;
+}
 /* ---------- audio ---------- */
 let MASTER=null;
 function audioOut(){
@@ -1920,6 +1950,7 @@ document.getElementById('resetAllBtn').onclick=()=>{
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&PLAY.active)playStop()});
 setupFretControls();updateSideProgress();updateHome();renderLearning();newQuiz();renderFretboard();generateEar();renderProgress();
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})})}
 </script>
 </body>
 </html>
