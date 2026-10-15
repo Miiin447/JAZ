@@ -213,3 +213,24 @@ test('minor-key ii-V and borrowed-chord teaching distinguish common shapes from 
   assert.match(secondary.why, /Em7b5/);
   assert.match(secondary.why, /도리안·멜로딕 마이너/);
 });
+
+
+test('corrupt local JSON disables normal writes until explicit restore or reset', () => {
+  const code = sourceBetween('function saveState()', '\n\nfunction scoreText');
+  let writes=0;
+  const context=vm.createContext({
+    STORAGE_LOAD_CORRUPTED:true,
+    STORE_KEY:'chordinary_state',
+    STATE:{completed:[]},
+    storageSet:()=>{writes++;return true},
+    updateSideProgress:()=>{},updateHome:()=>{},renderProgress:()=>{},
+    document:{getElementById:()=>({classList:{contains:()=>false}})},
+  });
+  vm.runInContext(code,context);
+  context.saveState();
+  assert.equal(writes,0);
+  context.STORAGE_LOAD_CORRUPTED=false;
+  context.saveState();
+  assert.equal(writes,1);
+  assert.match(html,/STORAGE_LOAD_CORRUPTED=false;\s*STATE=restored/);
+});
