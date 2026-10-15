@@ -698,7 +698,15 @@ try{
   STATE=normalizeState({});
 }
 if(!STORAGE_LOAD_CORRUPTED)storageSet(STORE_KEY,JSON.stringify(STATE));
-function saveState(){storageSet(STORE_KEY,JSON.stringify(STATE));updateSideProgress();updateHome();if(document.getElementById('view-progress').classList.contains('active'))renderProgress()}
+else window.addEventListener('load',()=>alert(
+  '저장된 학습 기록 JSON을 읽을 수 없어 자동 저장을 중단했습니다.\n'+
+  '기존 저장 값은 보호하고 있습니다. 정상 백업을 복원하거나, 기록 초기화를 명시적으로 선택해 주세요.'
+));
+function saveState(){
+  if(!STORAGE_LOAD_CORRUPTED)storageSet(STORE_KEY,JSON.stringify(STATE));
+  updateSideProgress();updateHome();
+  if(document.getElementById('view-progress').classList.contains('active'))renderProgress();
+}
 
 function scoreText(correct,total){return total?Math.round(correct/total*100)+'%':'미응시'}
 function markDaily(step){
@@ -1522,7 +1530,7 @@ function renderProgress(){
     return `<div class="masteryRow"><div class="masteryHead"><b>${label}</b><span>${s.total?p+'%':'미응시'}</span></div><div class="masteryMeta"><span>${s.total?s.correct+' / '+s.total:'기록 없음'}</span></div>${s.total?`<div class="barTrack" style="margin-top:7px"><i style="width:${p}%"></i></div>`:''}</div>`;
   }).join('');
 }
-document.getElementById('resetProgress').onclick=()=>{if(confirm('강의·퀴즈·음감 훈련·예시곡 기록을 모두 초기화할까요?')){STATE=normalizeState({});saveState();newQuiz();renderProgress();renderReview();updateHome()}};
+document.getElementById('resetProgress').onclick=()=>{if(confirm('강의·퀴즈·음감 훈련·예시곡 기록을 모두 초기화할까요?')){STORAGE_LOAD_CORRUPTED=false;STATE=normalizeState({});saveState();newQuiz();renderProgress();renderReview();updateHome()}};
 
 
 const SONGS=[
@@ -2415,13 +2423,14 @@ document.getElementById('importDataBtn').onclick=()=>{
     alert('브라우저 저장소에 기록하지 못했습니다. 기존 기록은 유지합니다.');
     return;
   }
+  STORAGE_LOAD_CORRUPTED=false;
   STATE=restored;
   updateSideProgress();updateHome();renderProgress();renderReview();renderSongStudy();
   alert('복원 완료');
 };
 document.getElementById('resetAllBtn').onclick=()=>{
   if(!confirm('Chordinary의 전체 학습 기록을 초기화할까요?'))return;
-  STATE=normalizeState({});
+  STORAGE_LOAD_CORRUPTED=false;STATE=normalizeState({});
   saveState();newQuiz();renderProgress();renderReview();renderDataBox();
 };
 
