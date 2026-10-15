@@ -190,7 +190,7 @@ test('corrupt browser state is not overwritten automatically on startup', () => 
 
 
 test('imported wrong-answer question text is HTML-escaped without discarding historic wording', () => {
-  const functionSource = sourceBetween('function escapeHtml(value)', 'function renderReview()');
+  const functionSource = html.match(/function escapeHtml\(value\)\{[\s\S]*?\n\}/)[0];
   const context = vm.createContext({});
   vm.runInContext(functionSource, context);
   assert.equal(
