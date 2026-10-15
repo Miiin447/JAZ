@@ -200,3 +200,16 @@ test('imported wrong-answer question text is HTML-escaped without discarding his
   assert.equal(context.escapeHtml("It's C# & Db"), "It&#39;s C# &amp; Db");
   assert.match(html, /\$\{escapeHtml\(x\.q\)\}/);
 });
+
+
+test('minor-key ii-V and borrowed-chord teaching distinguish common shapes from universal rules', () => {
+  const modalQuestion = extra.find(q => q.concept === 'modal_interchange' &&
+    q.q.includes('변화음 묶음'));
+  assert.ok(modalQuestion);
+  assert.match(modalQuestion.why, /모든 차용 코드가 세 음을 전부 포함한다는 뜻은 아닙니다/);
+  const secondary = extra.find(q => q.concept === 'secondary_dominant' &&
+    q.q.includes('Em7–A7–Dm7'));
+  assert.ok(secondary);
+  assert.match(secondary.why, /Em7b5/);
+  assert.match(secondary.why, /도리안·멜로딕 마이너/);
+});
