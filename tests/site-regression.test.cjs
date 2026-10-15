@@ -13,7 +13,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.webmanifes
 test('root index.html remains the only HTML entry; direct site address keeps working', () => {
   const htmlFiles = fs.readdirSync(ROOT).filter(name => /\.html?$/i.test(name));
   assert.deepEqual(htmlFiles, ['index.html']);
-  assert.match(html, /<title>Chordinary v37 · Harmony Training Lab<\/title>/);
+  assert.match(html, /<title>Chordinary v38 · Harmony Training Lab<\/title>/);
   assert.match(html, /navigator\.serviceWorker\.register\('\.\/sw\.js'\)/);
   assert.equal(manifest.start_url, './');
   assert.equal(manifest.scope, './');
@@ -23,8 +23,8 @@ test('root index.html remains the only HTML entry; direct site address keeps wor
 test('backup compatibility: version changes without renaming the persistent storage key', () => {
   assert.match(html, /const STORE_KEY='chordinary_state'/);
   assert.match(html, /chordinary_v35_state/);
-  assert.match(html, /function backupPayload\(\)\{return \{app:'Chordinary',version:'v37'/);
-  assert.match(html, /Chordinary_v37_backup_/);
+  assert.match(html, /function backupPayload\(\)\{return \{app:'Chordinary',version:'v38'/);
+  assert.match(html, /Chordinary_v38_backup_/);
 });
 
 test('both inline scripts and worker parse without executing user data', () => {
@@ -47,7 +47,7 @@ function createWorker({network, offlineCache} = {}) {
   const storage = {
     open: async () => cache,
     match: async key => offlineCache ? offlineCache(key) : null,
-    keys: async () => ['chordinary-offline', 'chordinary-offline-v37', 'unrelated-site'],
+    keys: async () => ['chordinary-offline', 'chordinary-offline-v38', 'unrelated-site'],
     delete: async name => { deleted.push(name); return true; },
   };
   const self = {
