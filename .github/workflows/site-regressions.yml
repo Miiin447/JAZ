@@ -20,3 +20,11 @@ jobs:
           node-version: '22'
       - name: Syntax, single-entry and offline behavior tests
         run: node --test tests/*.test.cjs
+      - name: Set up real Chromium smoke driver
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund puppeteer-core@24
+          CHROME=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+          test -n "$CHROME"
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
+      - name: Real browser quiz, navigation and backup safety
+        run: node tests/browser-smoke.cjs

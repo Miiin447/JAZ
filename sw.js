@@ -1,7 +1,7 @@
-/* Chordinary v37.
+/* Chordinary v38.
    Root index.html remains the only HTML entry point.
    Network-first for fresh uploads, offline fallback only for navigations. */
-const CACHE = 'chordinary-offline-v37';
+const CACHE = 'chordinary-offline-v38';
 const CORE = ['./', './index.html', './manifest.webmanifest',
               './icon-192.png', './icon-512.png', './favicon.png'];
 const BASE = new URL('./', self.location.href);
