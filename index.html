@@ -2308,6 +2308,13 @@ renderSongStudy();
 
 
 /* review, search and data tools */
+// A restored legacy quiz can contain historical text from a user-supplied JSON
+// backup. Keep the wording but never interpret it as markup.
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>"']/g, ch=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
 document.querySelectorAll('[data-quizmode]').forEach(b=>b.onclick=()=>{
   quizMode=b.dataset.quizmode;
   document.querySelectorAll('[data-quizmode]').forEach(x=>x.classList.toggle('active',x===b));
@@ -2323,7 +2330,7 @@ function openLessonFromReview(id){
 function renderReview(){
   const wrong=[...STATE.wrongQuiz].sort((a,b)=>(b.wrongCount||1)-(a.wrongCount||1)||String(b.at||'').localeCompare(String(a.at||'')));
   document.getElementById('wrongReviewList').innerHTML=wrong.length?wrong.slice(0,10).map(x=>`
-    <div class="reviewItem"><b>${x.lesson||x.concept}</b><div class="small">${x.q}</div><div class="tiny muted" style="margin-top:5px">누적 오답 ${x.wrongCount||1}회 · 교정 연속 정답 ${x.correctStreak||0}/2</div>
+    <div class="reviewItem"><b>${x.lesson||x.concept}</b><div class="small">${escapeHtml(x.q)}</div><div class="tiny muted" style="margin-top:5px">누적 오답 ${x.wrongCount||1}회 · 교정 연속 정답 ${x.correctStreak||0}/2</div>
     <div class="actions"><button class="btn ghost" onclick="openLessonFromReview('${x.concept}')">관련 강의</button></div></div>`).join('')
     :'<div class="lessonBlock mint">현재 저장된 오답이 없습니다.</div>';
 
