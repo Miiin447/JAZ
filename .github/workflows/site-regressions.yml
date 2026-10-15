@@ -19,4 +19,4 @@ jobs:
         with:
           node-version: '22'
       - name: Syntax, single-entry and offline behavior tests
-        run: node --test tests/site-regression.test.cjs
+        run: node --test tests/*.test.cjs
