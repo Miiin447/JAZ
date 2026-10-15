@@ -187,3 +187,16 @@ test('corrupt browser state is not overwritten automatically on startup', () => 
   assert.match(html, /if\(!STORAGE_LOAD_CORRUPTED\)storageSet\(STORE_KEY,JSON\.stringify\(STATE\)\)/);
   assert.match(html, /const STORE_KEY='chordinary_state'/);
 });
+
+
+test('imported wrong-answer question text is HTML-escaped without discarding historic wording', () => {
+  const functionSource = sourceBetween('function escapeHtml(value)', 'function renderReview()');
+  const context = vm.createContext({});
+  vm.runInContext(functionSource, context);
+  assert.equal(
+    context.escapeHtml('<img src=x onerror="alert(1)">'),
+    '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;'
+  );
+  assert.equal(context.escapeHtml("It's C# & Db"), "It&#39;s C# &amp; Db");
+  assert.match(html, /\$\{escapeHtml\(x\.q\)\}/);
+});
